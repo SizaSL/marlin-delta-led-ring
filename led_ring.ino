@@ -21,6 +21,8 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(PIXEL_COUNT, PIXEL_PIN, NEO_GRB + NE
 // and minimize distance between Arduino and first pixel.  Avoid connecting
 // on a live circuit...if you must, connect GND first.
 
+byte byteRead;
+
 void setup() {
 	// This is for Trinket 5V 16MHz, you can remove these three lines if you are not using a Trinket
 #if defined (__AVR_ATtiny85__)
@@ -31,6 +33,7 @@ void setup() {
 
 	strip.begin();
 	strip.show(); // Initialize all pixels to 'off'
+	Serial.begin(115200);
 }
 
 void loop() {
@@ -45,9 +48,30 @@ void loop() {
 	//theaterChase(strip.Color(0, 0, 127), 50); // Blue
 	//theaterChase(strip.Color(127, 127, 127), 50); // White
 
-	rainbow(50);
-	rainbowCycle(50);
+	/*rainbow(50);
+	rainbowCycle(50);*/
 	//theaterChaseRainbow(50);
+
+	if (Serial.available())
+	{
+		byteRead = Serial.read();
+		switch (byteRead)
+		{
+			case 'a':
+				theaterChase(strip.Color(127, 0, 0), 50); // Red
+				break;
+			case 's':
+				theaterChase(strip.Color(0, 127, 0), 50); // Green
+				break;
+			case 'd':
+				theaterChase(strip.Color(0, 0, 127), 50); // Blue
+				break;
+			case 'f':
+				theaterChase(strip.Color(127, 127, 127), 50); // White
+				break;
+		}
+		colorWipe(strip.Color(0, 0, 0), 0); // off
+	}
 }
 
 // Fill the dots one after the other with a color
