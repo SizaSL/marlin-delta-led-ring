@@ -3,7 +3,7 @@
 The LED ring interface for Marlin Delta firmware. It contains 16 RGB LEDs controlled by Arduino Pro Mini. Arduino Mega 2560 communicate with Arduino Pro Mini via one of its USART serial. Mega can either controlling LEDs from Mini Pro or updating firmware in it. Been doing this way could not only allow updating firmware in both Mega and Pro Mini also could do functional tests by only using the USB port on Mega.
 
 # Sequence Diagram
-![PlantUML model](http://www.plantuml.com/plantuml/png/dP112i8m44NtESLSm0jq8OXrLwLKT5j2dQR19XFI4VJsDgJH55ovdNd_p__Zf6VTQISjG_tYWQnmsMXtRThoKXvMmwFqervprQ5i6ssL4ChJmorMW4z6R-K87HaZxGq4GDfjjejH0GrEoB2FJ41En0XUgu4BgEKqRNYORTK0XcuOWAWC7kdoul9HZzZFuZCP14kiUzr9rcGdWVE9678k5xf1xKbvQKp8lygNsXS9MOGLaGjaskTT4lblYqoVXhdzhhklbT-COONnVtcmMEV7AmBy1W00)
+![PlantUML model](http://www.plantuml.com/plantuml/png/dP112i8m44NtESLSe1VeGX3hhagfwBQ4Eas3JIQa8-ZjRKWZARXoE_F-d__7IS-wrqvQXkRD8rdXij7-rdRLjJfkXYVf9xtbwcFLjTeg8PIdfrkj05-Ctie9UZ96sZi8WBGhTgjH2ItEo728J43En0XUgv5BQEGy5pmkjce4GtSCG5G6ZtHvTVcg9nmMyOKCWYNMW-ubQxApmEL43BcK2zsWyQIyD2Rat-HBxSk4hCAQo0KoxVCkYVotHQPFGoWo_tt_oAMRb667yODvj5ZenpC2_040)
 
 # Pins Swap
 ## Original RAMP 1.4 Pinouts
