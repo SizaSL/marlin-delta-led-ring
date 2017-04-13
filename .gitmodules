@@ -1,0 +1,4 @@
+[submodule "Adafruit_NeoPixel"]
+	path = Adafruit_NeoPixel
+	url = http://192.168.1.16:3000/siza/Adafruit_NeoPixel.git
+	branch = master
