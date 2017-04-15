@@ -16,6 +16,6 @@ try:
         serial_port.close()
         time.sleep(5)
         port_name = '-P' + mega_serial_port.device
-        call(['tools/avrdude_win', '-V', '-Ctools/avrdude.conf', '-v', '-r', '-patmega328p', '-carduino', port_name, '-b57600', '-Uflash:w:led-ring.hex:i'])
+        call(['tools/avrdude_win', '-V', '-Ctools/avrdude.conf', '-v', '-r', '-patmega328p', '-carduino', port_name, '-b57600', '-Uflash:w:platformio-build/.pioenvs/pro16MHzatmega328/firmware.hex:i'])
 except StopIteration:
         print("No Arduino Mega device connected")
