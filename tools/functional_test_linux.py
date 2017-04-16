@@ -6,7 +6,7 @@ from subprocess import call
 
 try:
 	#mega_serial_port = next(list_ports.grep("Arduino Pro"))
-	serial_port = serial.Serial(port="/dev/ttyUSB0",
+	serial_port = serial.Serial(port="/dev/LedRing",
 								baudrate=115200,
 								parity=serial.PARITY_NONE,
 								stopbits=serial.STOPBITS_ONE,
