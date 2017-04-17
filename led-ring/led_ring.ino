@@ -36,6 +36,7 @@ void setup() {
 
 	strip.begin();
 	strip.show(); // Initialize all pixels to 'off'
+	Serial.begin(115200); //For testing
 	mySerial.begin(115200);
 }
 
@@ -74,6 +75,27 @@ void loop() {
 				break;
 		}
 		colorWipe(strip.Color(0, 0, 0), 0); // off
+	}
+	if (Serial.available())
+	{
+		byteRead = Serial.read();
+		switch (byteRead)
+		{
+		case 'a':
+			theaterChase(strip.Color(127, 0, 0), 50); // Red
+			break;
+		case 's':
+			theaterChase(strip.Color(0, 127, 0), 50); // Green
+			break;
+		case 'd':
+			theaterChase(strip.Color(0, 0, 127), 50); // Blue
+			break;
+		case 'f':
+			theaterChase(strip.Color(127, 127, 127), 50); // White
+			break;
+		}
+		colorWipe(strip.Color(0, 0, 0), 0); // off
+
 	}
 }
 
