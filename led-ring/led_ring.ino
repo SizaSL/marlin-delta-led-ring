@@ -1,80 +1,74 @@
-#include <Adafruit_NeoPixel.h>
+#include <FastLED.h>
 #include <SoftwareSerial.h>
 
-#ifdef __AVR__
-#include <avr/power.h>
-#endif
+#define LED_PIN     10
+#define NUM_LEDS    16
+#define BRIGHTNESS  64
+#define LED_TYPE    WS2812B
+#define COLOR_ORDER GRB
+CRGB leds[NUM_LEDS];
 
-#define PIXEL_PIN 10
-#define	PIXEL_COUNT	16
-
-// Parameter 1 = number of pixels in strip
-// Parameter 2 = Arduino pin number (most are valid)
-// Parameter 3 = pixel type flags, add together as needed:
-//   NEO_KHZ800  800 KHz bitstream (most NeoPixel products w/WS2812 LEDs)
-//   NEO_KHZ400  400 KHz (classic 'v1' (not v2) FLORA pixels, WS2811 drivers)
-//   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
-//   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
-//   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(PIXEL_COUNT, PIXEL_PIN, NEO_GRB + NEO_KHZ800);
+#define UPDATES_PER_SECOND 100
 SoftwareSerial mySerial(3, 4); //RX, TX
 
-// IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
-// pixel power leads, add 300 - 500 Ohm resistor on first pixel's data input
-// and minimize distance between Arduino and first pixel.  Avoid connecting
-// on a live circuit...if you must, connect GND first.
+// This example shows several ways to set up and use 'palettes' of colors
+// with FastLED.
+//
+// These compact palettes provide an easy way to re-colorize your
+// animation on the fly, quickly, easily, and with low overhead.
+//
+// USING palettes is MUCH simpler in practice than in theory, so first just
+// run this sketch, and watch the pretty lights as you then read through
+// the code.  Although this sketch has eight (or more) different color schemes,
+// the entire sketch compiles down to about 6.5K on AVR.
+//
+// FastLED provides a few pre-configured color palettes, and makes it
+// extremely easy to make up your own color schemes with palettes.
+//
+// Some notes on the more abstract 'theory and practice' of
+// FastLED compact palettes are at the bottom of this file.
+
 
 byte byteRead;
+byte LEDsOn;
 
-void setup() {
-	// This is for Trinket 5V 16MHz, you can remove these three lines if you are not using a Trinket
-#if defined (__AVR_ATtiny85__)
-	if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
-#endif
-	// End of trinket special code
+CRGBPalette16 currentPalette;
+TBlendType    currentBlending;
 
+extern CRGBPalette16 myRedWhiteBluePalette;
+extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
 
-	strip.begin();
-	strip.show(); // Initialize all pixels to 'off'
+void setup() 
+{
+	delay(3000); // power-up safety delay
+	FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+	FastLED.setBrightness(BRIGHTNESS);
+
+	currentPalette = RainbowColors_p;
+	currentBlending = LINEARBLEND;
+
 	Serial.begin(115200); //For testing
 	mySerial.begin(115200);
 }
 
-void loop() {
-	// Some example procedures showing how to display to the pixels:
-	//colorWipe(strip.Color(255, 0, 0), 50); // Red
-	//colorWipe(strip.Color(0, 255, 0), 50); // Green
-	//colorWipe(strip.Color(0, 0, 255), 50); // Blue
-	//colorWipe(strip.Color(127, 127, 127), 50); // White
-
-	//theaterChase(strip.Color(127, 0, 0), 50); // Red
-	//theaterChase(strip.Color(0, 127, 0), 50); // Green
-	//theaterChase(strip.Color(0, 0, 127), 50); // Blue
-	//theaterChase(strip.Color(127, 127, 127), 50); // White
-
-	/*rainbow(50);
-	rainbowCycle(50);*/
-	//theaterChaseRainbow(50);
-
-	if (mySerial.available())
+void loop()
+{
+	if (LEDsOn == 1)
 	{
-		byteRead = mySerial.read();
-		switch (byteRead)
-		{
-			case 'a':
-				theaterChase(strip.Color(127, 0, 0), 50); // Red
-				break;
-			case 's':
-				theaterChase(strip.Color(0, 127, 0), 50); // Green
-				break;
-			case 'd':
-				theaterChase(strip.Color(0, 0, 127), 50); // Blue
-				break;
-			case 'f':
-				theaterChase(strip.Color(127, 127, 127), 50); // White
-				break;
-		}
-		colorWipe(strip.Color(0, 0, 0), 0); // off
+		ChangePalettePeriodically();
+
+		static uint8_t startIndex = 0;
+		startIndex = startIndex + 1; /* motion speed */
+
+		FillLEDsFromPaletteColors(startIndex);
+
+		FastLED.show();
+		FastLED.delay(1000 / UPDATES_PER_SECOND);
+	}
+	else
+	{
+		OffAllLeds();
+		FastLED.show();
 	}
 	if (Serial.available())
 	{
@@ -82,104 +76,188 @@ void loop() {
 		switch (byteRead)
 		{
 		case 'a':
-			theaterChase(strip.Color(127, 0, 0), 50); // Red
+			LEDsOn = 1;
 			break;
-		case 's':
-			theaterChase(strip.Color(0, 127, 0), 50); // Green
-			break;
-		case 'd':
-			theaterChase(strip.Color(0, 0, 127), 50); // Blue
-			break;
-		case 'f':
-			theaterChase(strip.Color(127, 127, 127), 50); // White
+		default:
+			LEDsOn = 0;
 			break;
 		}
-		colorWipe(strip.Color(0, 0, 0), 0); // off
+	}
+}
+	//if (mySerial.available())
+	//{
+	//	byteRead = mySerial.read();
+	//	switch (byteRead)
+	//	{
+	//		case 'a':
+	//			theaterChase(strip.Color(127, 0, 0), 50); // Red
+	//			break;
+	//		case 's':
+	//			theaterChase(strip.Color(0, 127, 0), 50); // Green
+	//			break;
+	//		case 'd':
+	//			theaterChase(strip.Color(0, 0, 127), 50); // Blue
+	//			break;
+	//		case 'f':
+	//			theaterChase(strip.Color(127, 127, 127), 50); // White
+	//			break;
+	//	}
+	//	colorWipe(strip.Color(0, 0, 0), 0); // off
+	//}
+	//if (Serial.available())
+	//{
+	//	byteRead = Serial.read();
+	//	switch (byteRead)
+	//	{
+	//	case 'a':
+	//		theaterChase(strip.Color(127, 0, 0), 50); // Red
+	//		break;
+	//	case 's':
+	//		theaterChase(strip.Color(0, 127, 0), 50); // Green
+	//		break;
+	//	case 'd':
+	//		theaterChase(strip.Color(0, 0, 127), 50); // Blue
+	//		break;
+	//	case 'f':
+	//		theaterChase(strip.Color(127, 127, 127), 50); // White
+	//		break;
+	//	}
+	//	colorWipe(strip.Color(0, 0, 0), 0); // off
 
+	//}
+//}
+
+void OffAllLeds()
+{
+	for (int i = 0; i < NUM_LEDS; i++) {
+		leds[i] = CRGB::Black;
 	}
 }
 
-// Fill the dots one after the other with a color
-void colorWipe(uint32_t c, uint8_t wait) {
-	for (uint16_t i = 0; i<strip.numPixels(); i++) {
-		strip.setPixelColor(i, c);
-		strip.show();
-		delay(wait);
+void FillLEDsFromPaletteColors(uint8_t colorIndex)
+{
+	uint8_t brightness = 255;
+
+	for (int i = 0; i < NUM_LEDS; i++) {
+		leds[i] = ColorFromPalette(currentPalette, colorIndex, brightness, currentBlending);
+		colorIndex += 3;
 	}
 }
 
-void rainbow(uint8_t wait) {
-	uint16_t i, j;
+// There are several different palettes of colors demonstrated here.
+//
+// FastLED provides several 'preset' palettes: RainbowColors_p, RainbowStripeColors_p,
+// OceanColors_p, CloudColors_p, LavaColors_p, ForestColors_p, and PartyColors_p.
+//
+// Additionally, you can manually define your own color palettes, or you can write
+// code that creates color palettes on the fly.  All are shown here.
 
-	for (j = 0; j<256; j++) {
-		for (i = 0; i<strip.numPixels(); i++) {
-			strip.setPixelColor(i, Wheel((i + j) & 255));
-		}
-		strip.show();
-		delay(wait);
+void ChangePalettePeriodically()
+{
+	uint8_t secondHand = (millis() / 1000) % 60;
+	static uint8_t lastSecond = 99;
+
+	if (lastSecond != secondHand) {
+		lastSecond = secondHand;
+		if (secondHand == 0) { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND; }
+		if (secondHand == 10) { currentPalette = RainbowStripeColors_p;   currentBlending = NOBLEND; }
+		if (secondHand == 15) { currentPalette = RainbowStripeColors_p;   currentBlending = LINEARBLEND; }
+		if (secondHand == 20) { SetupPurpleAndGreenPalette();             currentBlending = LINEARBLEND; }
+		if (secondHand == 25) { SetupTotallyRandomPalette();              currentBlending = LINEARBLEND; }
+		if (secondHand == 30) { SetupBlackAndWhiteStripedPalette();       currentBlending = NOBLEND; }
+		if (secondHand == 35) { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND; }
+		if (secondHand == 40) { currentPalette = CloudColors_p;           currentBlending = LINEARBLEND; }
+		if (secondHand == 45) { currentPalette = PartyColors_p;           currentBlending = LINEARBLEND; }
+		if (secondHand == 50) { currentPalette = myRedWhiteBluePalette_p; currentBlending = NOBLEND; }
+		if (secondHand == 55) { currentPalette = myRedWhiteBluePalette_p; currentBlending = LINEARBLEND; }
 	}
 }
 
-// Slightly different, this makes the rainbow equally distributed throughout
-void rainbowCycle(uint8_t wait) {
-	uint16_t i, j;
-
-	for (j = 0; j<256 * 5; j++) { // 5 cycles of all colors on wheel
-		for (i = 0; i< strip.numPixels(); i++) {
-			strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 255));
-		}
-		strip.show();
-		delay(wait);
+// This function fills the palette with totally random colors.
+void SetupTotallyRandomPalette()
+{
+	for (int i = 0; i < 16; i++) {
+		currentPalette[i] = CHSV(random8(), 255, random8());
 	}
 }
 
-//Theatre-style crawling lights.
-void theaterChase(uint32_t c, uint8_t wait) {
-	for (int j = 0; j<10; j++) {  //do 10 cycles of chasing
-		for (int q = 0; q < 3; q++) {
-			for (uint16_t i = 0; i < strip.numPixels(); i = i + 3) {
-				strip.setPixelColor(i + q, c);    //turn every third pixel on
-			}
-			strip.show();
+// This function sets up a palette of black and white stripes,
+// using code.  Since the palette is effectively an array of
+// sixteen CRGB colors, the various fill_* functions can be used
+// to set them up.
+void SetupBlackAndWhiteStripedPalette()
+{
+	// 'black out' all 16 palette entries...
+	fill_solid(currentPalette, 16, CRGB::Black);
+	// and set every fourth one to white.
+	currentPalette[0] = CRGB::White;
+	currentPalette[4] = CRGB::White;
+	currentPalette[8] = CRGB::White;
+	currentPalette[12] = CRGB::White;
 
-			delay(wait);
-
-			for (uint16_t i = 0; i < strip.numPixels(); i = i + 3) {
-				strip.setPixelColor(i + q, 0);        //turn every third pixel off
-			}
-		}
-	}
 }
 
-//Theatre-style crawling lights with rainbow effect
-void theaterChaseRainbow(uint8_t wait) {
-	for (int j = 0; j < 256; j++) {     // cycle all 256 colors in the wheel
-		for (int q = 0; q < 3; q++) {
-			for (uint16_t i = 0; i < strip.numPixels(); i = i + 3) {
-				strip.setPixelColor(i + q, Wheel((i + j) % 255));    //turn every third pixel on
-			}
-			strip.show();
+// This function sets up a palette of purple and green stripes.
+void SetupPurpleAndGreenPalette()
+{
+	CRGB purple = CHSV(HUE_PURPLE, 255, 255);
+	CRGB green = CHSV(HUE_GREEN, 255, 255);
+	CRGB black = CRGB::Black;
 
-			delay(wait);
-
-			for (uint16_t i = 0; i < strip.numPixels(); i = i + 3) {
-				strip.setPixelColor(i + q, 0);        //turn every third pixel off
-			}
-		}
-	}
+	currentPalette = CRGBPalette16(
+		green, green, black, black,
+		purple, purple, black, black,
+		green, green, black, black,
+		purple, purple, black, black);
 }
 
-// Input a value 0 to 255 to get a color value.
-// The colours are a transition r - g - b - back to r.
-uint32_t Wheel(byte WheelPos) {
-	WheelPos = 255 - WheelPos;
-	if (WheelPos < 85) {
-		return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
-	}
-	if (WheelPos < 170) {
-		WheelPos -= 85;
-		return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
-	}
-	WheelPos -= 170;
-	return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
-}
+
+// This example shows how to set up a static color palette
+// which is stored in PROGMEM (flash), which is almost always more
+// plentiful than RAM.  A static PROGMEM palette like this
+// takes up 64 bytes of flash.
+const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
+{
+	CRGB::Red,
+	CRGB::Gray, // 'white' is too bright compared to red and blue
+	CRGB::Blue,
+	CRGB::Black,
+
+	CRGB::Red,
+	CRGB::Gray,
+	CRGB::Blue,
+	CRGB::Black,
+
+	CRGB::Red,
+	CRGB::Red,
+	CRGB::Gray,
+	CRGB::Gray,
+	CRGB::Blue,
+	CRGB::Blue,
+	CRGB::Black,
+	CRGB::Black
+};
+
+
+
+// Additionl notes on FastLED compact palettes:
+//
+// Normally, in computer graphics, the palette (or "color lookup table")
+// has 256 entries, each containing a specific 24-bit RGB color.  You can then
+// index into the color palette using a simple 8-bit (one byte) value.
+// A 256-entry color palette takes up 768 bytes of RAM, which on Arduino
+// is quite possibly "too many" bytes.
+//
+// FastLED does offer traditional 256-element palettes, for setups that
+// can afford the 768-byte cost in RAM.
+//
+// However, FastLED also offers a compact alternative.  FastLED offers
+// palettes that store 16 distinct entries, but can be accessed AS IF
+// they actually have 256 entries; this is accomplished by interpolating
+// between the 16 explicit entries to create fifteen intermediate palette
+// entries between each pair.
+//
+// So for example, if you set the first two explicit entries of a compact 
+// palette to Green (0,255,0) and Blue (0,0,255), and then retrieved 
+// the first sixteen entries from the virtual palette (of 256), you'd get
+// Green, followed by a smooth gradient from green-to-blue, and then Blue.
