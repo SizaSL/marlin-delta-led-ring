@@ -46,18 +46,6 @@ The Marlin firmware needs to be modified with existing or new g-code to pass dat
 
 # Arduino remote programming
 
-# Linux command
-```
-./rfc2217_server.py /dev/ttyUSB0
-```
-rfc2217_server.py includes in pyserial code example.
+Check in followind repo.
 
-# Windows command
-```
-com2tcp-rfc2217.bat \\.\COM13 192.168.1.10 2217
-```
-com2tcp-rfc2217.bat includes in hub4com code example.
-
-COM12 <-> COM13 is com0com pair
-
-Virsual Studio or Arduino IDE will connect and uploaded via COM12. The Arduino connected on /dev/ttyUSB0 will be uploaded the program from V.S or Arduino IDE.
+[Arduino Remote Upload](https://github.com/SizaSL/arduino-remote-upload.git)
