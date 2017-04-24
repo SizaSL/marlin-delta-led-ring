@@ -46,6 +46,6 @@ The Marlin firmware needs to be modified with existing or new g-code to pass dat
 
 # Arduino remote programming
 
-Check in followind repo.
+Check in following repo.
 
 [Arduino Remote Upload](https://github.com/SizaSL/arduino-remote-upload.git)

@@ -12,9 +12,10 @@ try:
 								stopbits=serial.STOPBITS_ONE,
 								bytesize=serial.EIGHTBITS)
 	serial_port.isOpen()
-	time.sleep(3)
-	serial_port.write("asdf")
+	time.sleep(5)
+	serial_port.write("a")
 	time.sleep(6)
+	serial_port.write("s")
 	serial_port.close()
 except StopIteration:
 	print("No Arduino device connected")
